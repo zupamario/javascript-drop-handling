@@ -72,26 +72,35 @@ async function getAllFileEntries(dataTransferItemList) {
 
 /**
  * Returns a promise yielding an array buffer of the file contents
- * @param {File} file 
+ * @param {File} file The file to read
+ * @param {boolean} binary If true the file will be read into an ArrayBuffer, if false it will be read as a string
  */
-async function readFile(file) {
-    // We prefer to use the new arrayBuffer Blob function directly. It already returns a promise.
-    if (typeof file.arrayBuffer === "function") {
-        return file.arrayBuffer(file)
-    } else {
-        reader = new FileReader()
-        return new Promise((resolve, reject) => {
-            reader.onerror = () => {
-                temporaryFileReader.abort();
-                reject(new DOMException("Problem parsing file."));
-            };
-        
-            reader.onload = () => {
-                resolve(reader.result);
-            };
-            reader.readAsArrayBuffer(file);
-        })
-    }
+async function readFile(file, binary=true) {
+  // We prefer to use the new arrayBuffer Blob function directly. It already returns a promise.
+  if (typeof file.arrayBuffer === "function") {
+      if (binary) {
+          return file.arrayBuffer()
+      } else {
+          return file.text()
+      }
+  } else {
+      reader = new FileReader()
+      return new Promise((resolve, reject) => {
+          reader.onerror = () => {
+              temporaryFileReader.abort();
+              reject(new DOMException("Problem parsing file."));
+          };
+      
+          reader.onload = () => {
+              resolve(reader.result);
+          };
+          if (binary) {
+              reader.readAsArrayBuffer(file);
+          } else {
+              reader.readAsText()
+          }
+      })
+  }
 }
   
 
